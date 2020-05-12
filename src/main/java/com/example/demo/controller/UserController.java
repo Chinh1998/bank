@@ -7,9 +7,9 @@
 package com.example.demo.controller;
 
 import java.util.List;
+import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.bean.ResultBean;
-import com.example.demo.bean.entity.BankEntity;
-import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.bean.model.JwtResponse;
 import com.example.demo.bean.model.UserBank;
 import com.example.demo.service.UserService;
 import com.example.demo.ultil.ApiValidateException;
+import com.example.demo.ultil.Constant;
+import com.example.demo.ultil.ReadProperties;
 
 /**
  * [OVERVIEW] XXXXX.
@@ -40,10 +40,13 @@ import com.example.demo.ultil.ApiValidateException;
 @RestController
 public class UserController {
 
-    private static final Log log = LogFactory.getLog(UserController.class);
+    private static final Logger log = Logger.getLogger(UserController.class);
 
     @Autowired
-    private UserService userService;;
+    private UserService userService;
+    @SuppressWarnings("static-access")
+    private Properties properties = new ReadProperties().readProperties();
+    static final Constant constant = new Constant();
 
     /**
      * createUser
@@ -53,17 +56,18 @@ public class UserController {
      */
     @RequestMapping(value = "/api/user/register", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> createUser(@RequestBody String json) {
-        log.debug("### createUser START ###");
-        UserEntity user = null;
+        log.info("### createUser START ###");
         ResultBean resultBean = null;
         try {
-            user = userService.createUser(json);
+            resultBean = userService.createUser(json);
         } catch (ApiValidateException e) {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.METHOD_NOT_ALLOWED);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            resultBean = new ResultBean(e.getMessage(), Constant.BAD_REQUEST);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(user, "200", "...", "Thành công");
-        log.debug("### createUser END ###");
+        log.info("### createUser END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
 
@@ -74,19 +78,18 @@ public class UserController {
      */
     @RequestMapping(value = "/api/user/get_info", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> getUserById() {
-        log.debug("### getUserById START ###");
-        UserEntity user = null;
+        log.info("### getUserById START ###");
         ResultBean resultBean = null;
         try {
-            user = userService.getUserById();
+            resultBean = userService.getUserById();
         } catch (ApiValidateException e) {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.FORBIDDEN);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.FORBIDDEN);
+            resultBean = new ResultBean(e.getMessage(), Constant.BAD_REQUEST);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(user, "200", user.getUserId().toString(), "OK");
-        log.debug("### getUserById END ###");
+        log.info("### getUserById END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
 
@@ -98,20 +101,18 @@ public class UserController {
      */
     @RequestMapping(value = "/api/user/update", method = RequestMethod.PUT, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> updateUser(@RequestBody String json) {
-        log.debug("### updateUser START ###");
-        UserEntity user = null;
+        log.info("### updateUser START ###");
         ResultBean resultBean = null;
         try {
-            user = userService.updateUser(json);
+            resultBean = userService.updateUser(json);
         } catch (ApiValidateException e) {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
             return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            resultBean = new ResultBean("", e.getMessage());
+            resultBean = new ResultBean(e.getMessage(), Constant.BAD_REQUEST);
             return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(user, "200", "...", "Thành công");
-        log.debug("### updateUser END ###");
+        log.info("### updateUser END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
 
@@ -123,17 +124,18 @@ public class UserController {
      */
     @RequestMapping(value = "/api/user/linktobank", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> linkToBank(@RequestBody String json) {
-        log.debug("### linkToBank START ###");
-        BankEntity userBankEntity = null;
+        log.info("### linkToBank START ###");
         ResultBean resultBean = null;
         try {
-            userBankEntity = userService.linkToBank(json);
+            resultBean = userService.linkToBank(json);
         } catch (ApiValidateException e) {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
             return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            resultBean = new ResultBean(e.getMessage(), Constant.BAD_REQUEST);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(userBankEntity, "200", "...", "Thành công");
-        log.debug("### linkToBank END ###");
+        log.info("### linkToBank END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
 
@@ -144,7 +146,7 @@ public class UserController {
      */
     @RequestMapping(value = "/api/user/listbank", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> getBanksByUser() {
-        log.debug("### getBanksByUser START ###");
+        log.info("### getBanksByUser START ###");
         List<UserBank> userBanks = null;
         ResultBean resultBean = null;
         try {
@@ -153,10 +155,11 @@ public class UserController {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
             return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+            resultBean = new ResultBean(e.getMessage(), Constant.BAD_REQUEST);
             return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(userBanks, "200", "getBanksByUserId", "OK");
-        log.debug("### getBanksByUser END ###");
+        resultBean = new ResultBean(userBanks, Constant.OK, "getBanksByUserId", properties.getProperty("ok"));
+        log.info("### getBanksByUser END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
 
@@ -169,20 +172,20 @@ public class UserController {
      */
     @RequestMapping(value = "/api/user/login", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> login(@RequestBody String json) {
-        log.debug("### login START ###");
+        log.info("### login START ###");
         JwtResponse jwtResponse = null;
         ResultBean resultBean = null;
         try {
             jwtResponse = userService.login(json);
         } catch (ApiValidateException e) {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            resultBean = new ResultBean("401", e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.UNAUTHORIZED);
+            resultBean = new ResultBean(HttpStatus.BAD_REQUEST, e.getMessage(), properties.getProperty("usernameLogin"));
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(jwtResponse, "200", "login", "OK");
-        log.debug("### login END ###");
+        resultBean = new ResultBean(jwtResponse, Constant.OK, "login", properties.getProperty("ok"));
+        log.info("### login END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
 

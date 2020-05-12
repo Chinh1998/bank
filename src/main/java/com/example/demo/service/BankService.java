@@ -6,9 +6,7 @@
 
 package com.example.demo.service;
 
-import java.util.List;
-
-import com.example.demo.bean.entity.BankEntity;
+import com.example.demo.bean.ResultBean;
 import com.example.demo.ultil.ApiValidateException;
 
 /**
@@ -31,7 +29,7 @@ public interface BankService {
      * @return BankEntity
      * @throws ApiValidateException
      */
-    public BankEntity createBank(String json) throws ApiValidateException;
+    public ResultBean createBank(String json) throws ApiValidateException;
 
     /**
      * getAll
@@ -39,7 +37,7 @@ public interface BankService {
      * @return List<BankEntity>
      * @throws ApiValidateException 
      */
-    public List<BankEntity> getAll() throws ApiValidateException;
+    public ResultBean getAll() throws ApiValidateException;
 
     /**
      * getById
@@ -48,5 +46,5 @@ public interface BankService {
      * @return BankEntity
      * @throws ApiValidateException 
      */
-    public BankEntity getBankById(Integer id) throws ApiValidateException;
+    public ResultBean getBankById(Integer id) throws ApiValidateException;
 }

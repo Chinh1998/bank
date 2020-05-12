@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.service.UserService;
+import com.example.demo.ultil.ApiValidateException;
 
 /**
  * [OVERVIEW] XXXXX.
@@ -35,8 +36,9 @@ public class AuthenticationHelper {
      * getLoggedInUser
      * @author: (VNEXT) ChinhTQ
      * @return
+     * @throws ApiValidateException 
      */
-    public UserEntity getLoggedInUser() {
+    public UserEntity getLoggedInUser() throws ApiValidateException {
         log.debug("### getLoggedInUser START ###");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();

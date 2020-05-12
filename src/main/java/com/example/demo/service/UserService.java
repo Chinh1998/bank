@@ -8,7 +8,7 @@ package com.example.demo.service;
 
 import java.util.List;
 
-import com.example.demo.bean.entity.BankEntity;
+import com.example.demo.bean.ResultBean;
 import com.example.demo.bean.entity.UserBankEntity;
 import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.bean.model.JwtResponse;
@@ -35,7 +35,7 @@ public interface UserService {
      * @return UserEntity
      * @throws ApiValidateException
      */
-    public UserEntity createUser(String json) throws ApiValidateException;
+    public ResultBean createUser(String json) throws ApiValidateException;
 
     /**
      * getUserById
@@ -44,7 +44,7 @@ public interface UserService {
      * @return UserEntity
      * @throws ApiValidateException
      */
-    public UserEntity getUserById() throws ApiValidateException;
+    public ResultBean getUserById() throws ApiValidateException;
 
     /**
      * updateUserById
@@ -54,7 +54,7 @@ public interface UserService {
      * @return UserEntity
      * @throws ApiValidateException
      */
-    public UserEntity updateUser(String json) throws ApiValidateException;
+    public ResultBean updateUser(String json) throws ApiValidateException;
 
     /**
      * linkToBank
@@ -64,15 +64,16 @@ public interface UserService {
      * @return UserBankEntity
      * @throws ApiValidateException
      */
-    public BankEntity linkToBank(String json) throws ApiValidateException;
+    public ResultBean linkToBank(String json) throws ApiValidateException;
 
     /**
      * getAllBankByUserId
      * @author: (VNEXT) ChinhTQ
      * @param id
      * @return List<UserBankEntity> of one user
+     * @throws ApiValidateException 
      */
-    public List<UserBankEntity> getAllBankByUser();
+    public List<UserBankEntity> getAllBankByUser() throws ApiValidateException;
 
     /**
      * getBanksByUserId
@@ -107,6 +108,7 @@ public interface UserService {
      * @author: (VNEXT) ChinhTQ
      * @param username
      * @return UserEntity
+     * @throws ApiValidateException 
      */
-    public UserEntity getByUsername(String username);
+    public UserEntity getByUsername(String username) throws ApiValidateException;
 }

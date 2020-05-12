@@ -5,11 +5,13 @@
 /////////////////////////////////////////////////////////////////////////////
 package com.example.demo.security;
 
-import com.example.demo.ultil.JwtTokenUtil;
-import io.jsonwebtoken.ExpiredJwtException;
+import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,11 +21,9 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import com.example.demo.ultil.JwtTokenUtil;
+
+import io.jsonwebtoken.ExpiredJwtException;
 
 /**
  * [OVERVIEW] XXXXX.
@@ -38,7 +38,6 @@ import java.io.IOException;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private static final Log log = LogFactory.getLog(JwtRequestFilter.class);
     @Autowired
     private UserDetailsService userDetailsService;
     @Autowired
@@ -52,7 +51,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        log.debug("### doFilterInternal START ###");
         final String requestTokenHeader = request.getHeader("Authorization");
         String username = null;
         String jwtToken = null;
@@ -86,6 +84,5 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
         chain.doFilter(request, response);
-        log.debug("### doFilterInternal END ###");
     }
 }

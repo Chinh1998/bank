@@ -8,8 +8,8 @@ package com.example.demo.security;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.bean.entity.RoleEntity;
 import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.service.UserService;
+import com.example.demo.ultil.ApiValidateException;
 
 /**
  * [OVERVIEW] XXXXX.
@@ -36,7 +37,7 @@ import com.example.demo.service.UserService;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private static final Log log = LogFactory.getLog(UserDetailsServiceImpl.class);
+    private static final Logger log = LogManager.getLogger(UserDetailsServiceImpl.class);
 
     @Autowired
     private UserService userService;
@@ -51,11 +52,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("### loadUserByUsername START ###");
-        UserEntity user = userService.getByUsername(username);
-
-        // If user not found, throw an Exception
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found: " + username);
+        UserEntity user=null;
+        try {
+            user = userService.getByUsername(username);
+        } catch (ApiValidateException e) {
         }
 
         Set<GrantedAuthority> authorities = new HashSet<>();

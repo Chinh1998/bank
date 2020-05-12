@@ -22,6 +22,11 @@ import java.util.Properties;
 
 public class ReadProperties {
 
+    /**
+     * readProperties
+     * @author: (VNEXT) ChinhTQ
+     * @return Properties
+     */
     public static Properties readProperties() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Properties properties = new Properties();

@@ -8,6 +8,7 @@ package com.example.demo.service;
 
 import java.util.List;
 
+import com.example.demo.bean.ResultBean;
 import com.example.demo.bean.entity.TransactionEntity;
 import com.example.demo.bean.model.UserTransaction;
 import com.example.demo.ultil.ApiValidateException;
@@ -32,7 +33,7 @@ public interface TransactionService {
      * @return TransactionEntity
      * @throws ApiValidateException
      */
-    public TransactionEntity sendMoney(String json) throws ApiValidateException;
+    public ResultBean sendMoney(String json) throws ApiValidateException;
 
     /**
      * withdrawMoney

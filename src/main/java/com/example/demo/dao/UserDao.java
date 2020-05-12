@@ -11,6 +11,7 @@ import java.util.List;
 import com.example.demo.bean.entity.UserBankEntity;
 import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.bean.model.UserBank;
+import com.example.demo.bean.model.UserDto;
 
 /**
  * [OVERVIEW] XXXXX.
@@ -40,6 +41,14 @@ public interface UserDao {
     public UserEntity getUserById(Integer id);
 
     /**
+     * getUserDtoByUserId
+     * @author: (VNEXT) ChinhTQ
+     * @param id
+     * @return
+     */
+    public UserDto getUserDtoByUserId(Integer id);
+
+    /**
      * updateUser
      * @author: (VNEXT) ChinhTQ
      * @param user
@@ -60,7 +69,7 @@ public interface UserDao {
      * @param userId
      * @param money
      */
-    public void afterWithdrawMoney(Integer userId, double money);
+    public void afterWithdrawMoney(Integer userId, double money, double fee);
 
     /**
      * afterTransferMoney
@@ -69,7 +78,7 @@ public interface UserDao {
      * @param money
      * @return true:success
      */
-    public boolean afterTransferMoney(Integer userTransfer, double money);
+    public boolean afterTransferMoney(Integer userTransfer, double money, double fee);
 
     /**
      * afterReceiverMoney
@@ -78,7 +87,7 @@ public interface UserDao {
      * @param money
      * @return true:success
      */
-    public boolean afterReceiverMoney(Integer userReceiver, double money);
+    public void afterReceiverMoney(Integer userReceiver, double money);
 
     /**
      * linkToBank
@@ -111,11 +120,11 @@ public interface UserDao {
      */
     public UserEntity getByUsername(String username);
 
-//    /**
-//     * getRolesByUserId
-//     * @author: (VNEXT) ChinhTQ
-//     * @param id
-//     * @return Map<RoleEntity>
-//     */
-//    public Set<RoleEntity> getRolesByUserId(Integer id);
+    //    /**
+    //     * getRolesByUserId
+    //     * @author: (VNEXT) ChinhTQ
+    //     * @param id
+    //     * @return Map<RoleEntity>
+    //     */
+    //    public Set<RoleEntity> getRolesByUserId(Integer id);
 }

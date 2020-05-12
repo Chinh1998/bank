@@ -7,9 +7,9 @@
 package com.example.demo.controller;
 
 import java.util.List;
+import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +25,8 @@ import com.example.demo.bean.entity.TransactionEntity;
 import com.example.demo.bean.model.UserTransaction;
 import com.example.demo.service.TransactionService;
 import com.example.demo.ultil.ApiValidateException;
+import com.example.demo.ultil.Constant;
+import com.example.demo.ultil.ReadProperties;
 
 /**
  * [OVERVIEW] XXXXX.
@@ -38,9 +40,12 @@ import com.example.demo.ultil.ApiValidateException;
 */
 @RestController
 public class TransactionController {
-    private static final Log log = LogFactory.getLog(TransactionController.class);
+    private static final Logger log = Logger.getLogger(TransactionController.class);
     @Autowired
     private TransactionService transactionService;
+    @SuppressWarnings("static-access")
+    private Properties properties = new ReadProperties().readProperties();
+    static final Constant constant = new Constant();
 
     /**
      * sendMoney
@@ -51,14 +56,16 @@ public class TransactionController {
     @RequestMapping(value = "/api/transaction/send", method = RequestMethod.POST, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> sendMoney(@RequestBody String json) {
         log.debug("### sendMoney START ###");
-        TransactionEntity transactionEntity = null;
+        ResultBean resultBean;
         try {
-            transactionEntity = transactionService.sendMoney(json);
+            resultBean = transactionService.sendMoney(json);
         } catch (ApiValidateException e) {
-            ResultBean resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            resultBean = new ResultBean(e.getMessage(), Constant.BAD_REQUEST);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        ResultBean resultBean = new ResultBean(transactionEntity, "200", "...", "Nộp thành công");
         log.debug("### sendMoney END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
@@ -77,12 +84,12 @@ public class TransactionController {
             transactionEntity = transactionService.withdrawMoney(json);
         } catch (ApiValidateException e) {
             ResultBean resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            ResultBean resultBean = new ResultBean("400", e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            ResultBean resultBean = new ResultBean(Constant.BAD_REQUEST, e.getMessage());
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        ResultBean resultBean = new ResultBean(transactionEntity, "200", "...", "Rút thành công");
+        ResultBean resultBean = new ResultBean(transactionEntity, Constant.OK, "...", properties.getProperty("ok"));
         log.debug("### withdrawMoney END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
@@ -101,12 +108,12 @@ public class TransactionController {
             transactionEntity = transactionService.transferMoney(json);
         } catch (ApiValidateException e) {
             ResultBean resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            ResultBean resultBean = new ResultBean("400", e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            ResultBean resultBean = new ResultBean(Constant.BAD_REQUEST, e.getMessage());
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        ResultBean resultBean = new ResultBean(transactionEntity, "200", "...", "Chuyển thành công");
+        ResultBean resultBean = new ResultBean(transactionEntity, Constant.OK, "...", properties.getProperty("ok"));
         log.debug("### transferMoney END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
@@ -126,9 +133,9 @@ public class TransactionController {
             userTransactions = transactionService.getAllByUser();
         } catch (ApiValidateException e) {
             resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        resultBean = new ResultBean(userTransactions, "200", "OK");
+        resultBean = new ResultBean(userTransactions, Constant.OK, properties.getProperty("ok"));
         log.debug("### getAllTransactionByUser END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
@@ -139,6 +146,7 @@ public class TransactionController {
      * @param id
      * @return
      */
+    @SuppressWarnings("static-access")
     @RequestMapping(value = "/api/transactions/type-transaction/{id}", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ResultBean> getTransactionByUserAndByTypeTransaction(@PathVariable Integer id) {
         log.debug("### getTransactionByUserAndByTypeTransaction START ###");
@@ -147,12 +155,12 @@ public class TransactionController {
             userTransactions = transactionService.getTransactionByUserAndByTypeTransaction(id);
         } catch (ApiValidateException e) {
             ResultBean resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            ResultBean resultBean = new ResultBean("400", e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            ResultBean resultBean = new ResultBean(constant.BAD_REQUEST, e.getMessage());
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        ResultBean resultBean = new ResultBean(userTransactions, "200", "...", "OK");
+        ResultBean resultBean = new ResultBean(userTransactions, Constant.OK, "...", properties.getProperty("ok"));
         log.debug("### getTransactionByUserAndByTypeTransaction END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
@@ -172,12 +180,12 @@ public class TransactionController {
             transactionService.csvWriterByUser(userTransactions);
         } catch (ApiValidateException e) {
             ResultBean resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             ResultBean resultBean = new ResultBean("400", e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        ResultBean resultBean = new ResultBean(userTransactions, "200", "writer csv", "Ghi và tải thành công");
+        ResultBean resultBean = new ResultBean(userTransactions, Constant.OK, "writer csv", properties.getProperty("ok"));
         log.debug("### csvWriterSendTransactionByUser END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }
@@ -197,12 +205,12 @@ public class TransactionController {
             transactionService.csvWriterByUser(userTransactions);
         } catch (ApiValidateException e) {
             ResultBean resultBean = new ResultBean(e.getCode(), e.getField(), e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             ResultBean resultBean = new ResultBean("400", e.getMessage());
-            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_GATEWAY);
+            return new ResponseEntity<ResultBean>(resultBean, HttpStatus.BAD_REQUEST);
         }
-        ResultBean resultBean = new ResultBean(userTransactions, "200", "writer csv", "Ghi và tải thành công");
+        ResultBean resultBean = new ResultBean(userTransactions, Constant.OK, "writer csv", properties.getProperty("ok"));
         log.debug("### csvWriterByUser END ###");
         return new ResponseEntity<ResultBean>(resultBean, HttpStatus.OK);
     }

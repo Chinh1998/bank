@@ -13,14 +13,14 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.bean.entity.UserBankEntity;
 import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.bean.model.UserBank;
+import com.example.demo.bean.model.UserDto;
 import com.example.demo.dao.UserDao;
 
 /**
@@ -36,7 +36,7 @@ import com.example.demo.dao.UserDao;
 @Repository
 @Transactional
 public class UserDaoImpl implements UserDao {
-    private static final Log log = LogFactory.getLog(UserDaoImpl.class);
+    private static final Logger log = Logger.getLogger(UserDaoImpl.class);
 
     @Autowired
     private EntityManager etityManager;
@@ -80,7 +80,37 @@ public class UserDaoImpl implements UserDao {
         log.debug("### getUserById END ###");
         return user;
     }
+    @Override
+    public UserDto getUserDtoByUserId(Integer id) {
+        log.debug("### getUserById START ###");
+        StringBuilder sql = new StringBuilder();
+        sql.append(" SELECT new com.example.demo.bean.model.UserDto(  ");
+        sql.append("    u.username,  ");
+        sql.append("    u.phoneNumber,  ");
+        sql.append("    u.email,  ");
+        sql.append("    u.dOBirth,  ");
+        sql.append("    u.balance,  ");
+        sql.append("    b.bankName )");
+        sql.append(" FROM ");
+        sql.append("    UserEntity u ");
+        sql.append(" INNER JOIN ");
+        sql.append("    BankEntity b ");
+        sql.append(" ON ");
+        sql.append("    u.bankId = b.bankId ");
+        sql.append(" WHERE ");
+        sql.append("    u.userId = :id ");
 
+        Query query = this.etityManager.createQuery(sql.toString());
+        query.setParameter("id", id);
+        UserDto user = null;
+        try {
+            user = (UserDto) query.getSingleResult();
+        } catch (NoResultException e) {
+            // TODO: handle exception
+        }
+        log.debug("### getUserById END ###");
+        return user;
+    }
     /**
      * updateUser
      * @author: (VNEXT) ChinhTQ
@@ -126,19 +156,20 @@ public class UserDaoImpl implements UserDao {
      * @param money
      */
     @Override
-    public void afterWithdrawMoney(Integer userId, double money) {
+    public void afterWithdrawMoney(Integer userId, double money, double fee) {
         log.debug("### afterWithdrawMoney START ###");
         StringBuilder sql = new StringBuilder();
         sql.append(" UPDATE ");
         sql.append(" UserEntity u");
         sql.append(" SET ");
-        sql.append(" u.balance = u.balance - :money ");
+        sql.append(" u.balance = u.balance - :money - :fee ");
         sql.append(" WHERE ");
         sql.append("	u.userId = :userId ");
 
         Query query = this.etityManager.createQuery(sql.toString());
         query.setParameter("money", money);
         query.setParameter("userId", userId);
+        query.setParameter("fee", fee);
         query.executeUpdate();
         log.debug("### afterWithdrawMoney END ###");
     }
@@ -151,19 +182,20 @@ public class UserDaoImpl implements UserDao {
      * @return true:success
      */
     @Override
-    public boolean afterTransferMoney(Integer userTransfer, double money) {
+    public boolean afterTransferMoney(Integer userTransfer, double money, double fee) {
         log.debug("### afterTransferMoney START ###");
         StringBuilder sql = new StringBuilder();
         sql.append(" UPDATE ");
         sql.append(" UserEntity u");
         sql.append(" SET ");
-        sql.append(" u.balance = u.balance - :money ");
+        sql.append(" u.balance = u.balance - :money - :fee ");
         sql.append(" WHERE ");
         sql.append("    u.userId = :userTransfer ");
 
         Query query = this.etityManager.createQuery(sql.toString());
         query.setParameter("money", money);
         query.setParameter("userTransfer", userTransfer);
+        query.setParameter("fee", fee);
         int execute = query.executeUpdate();
         if (execute == 1) {
             return true;
@@ -180,7 +212,7 @@ public class UserDaoImpl implements UserDao {
      * @return true:success
      */
     @Override
-    public boolean afterReceiverMoney(Integer userReceiver, double money) {
+    public void afterReceiverMoney(Integer userReceiver, double money) {
         log.debug("### afterReceiverMoney START ###");
         StringBuilder sql = new StringBuilder();
         sql.append(" UPDATE ");
@@ -191,16 +223,10 @@ public class UserDaoImpl implements UserDao {
         sql.append("    u.userId = :userReceiver ");
 
         Query query = this.etityManager.createQuery(sql.toString());
-        query.setParameter("money", money);
         query.setParameter("userReceiver", userReceiver);
+        query.setParameter("money", money);
         query.executeUpdate();
-
-        int execute = query.executeUpdate();
-        if (execute == 1) {
-            return true;
-        }
         log.debug("### afterReceiverMoney END ###");
-        return false;
     }
 
     /**
@@ -294,29 +320,4 @@ public class UserDaoImpl implements UserDao {
         log.debug("### getByUsername END ###");
         return userEntity;
     }
-    //
-    //    @Override
-    //    public Set<RoleEntity> getRolesByUserId(Integer id) {
-    //        StringBuilder sql = new StringBuilder();
-    //        sql.append(" SELECT ");
-    //        sql.append("    ure.roleId, ");
-    //        sql.append("    re.roleName )");
-    //        sql.append(" FROM )");
-    //        sql.append("    RoleEntity re");
-    //        sql.append(" JOIN");
-    //        sql.append("    UserRoleEntity ure");
-    //        sql.append(" ON");
-    //        sql.append("    ure.roleId = re.roleId");
-    //        sql.append(" WHERE ");
-    //        sql.append("     ure.userId = :id");
-    //
-    //        Query query = this.etityManager.createQuery(sql.toString());
-    //        query.setParameter("id", id);
-    //        
-    //        RoleEntity userRole =  (RoleEntity) query.getSingleResult();
-    //        Set<RoleEntity> roleEntities = new HashSet<>();
-    //       roleEntities.add(userRole);
-    //        return roleEntities;
-    //    }
-
 }

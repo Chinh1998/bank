@@ -12,8 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -34,7 +33,7 @@ import com.example.demo.dao.TransactionDao;
 @Repository
 @Transactional
 public class TransactionDaoImpl implements TransactionDao {
-    private static final Log log = LogFactory.getLog(TransactionDaoImpl.class);
+    private static final Logger log = Logger.getLogger(TransactionDaoImpl.class);
 
     @Autowired
     private EntityManager entityManager;

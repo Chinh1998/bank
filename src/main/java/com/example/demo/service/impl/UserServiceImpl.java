@@ -12,8 +12,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,12 +24,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.bean.entity.BankEntity;
+import com.example.demo.bean.ResultBean;
 import com.example.demo.bean.entity.RoleEntity;
 import com.example.demo.bean.entity.UserBankEntity;
 import com.example.demo.bean.entity.UserEntity;
 import com.example.demo.bean.model.JwtResponse;
 import com.example.demo.bean.model.UserBank;
+import com.example.demo.bean.model.UserDto;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dao.UserRepository;
 import com.example.demo.helper.AuthenticationHelper;
@@ -57,7 +57,7 @@ import com.example.demo.ultil.Validate;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private static final Log log = LogFactory.getLog(UserServiceImpl.class);
+    private static final Logger log = Logger.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserDao userDao;
@@ -76,10 +76,10 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
-    private Validate validate = new Validate();
-    private Constant constant;
+    private Validate validate;
     @SuppressWarnings("static-access")
     private Properties properties = new ReadProperties().readProperties();
+    static final Constant constant = new Constant();
 
     /**
      * createUser
@@ -90,58 +90,68 @@ public class UserServiceImpl implements UserService {
      */
     @SuppressWarnings("static-access")
     @Override
-    public UserEntity createUser(String json) throws ApiValidateException {
+    public ResultBean createUser(String json) throws ApiValidateException {
         log.debug("### createUser START ###");
         JSONObject jsonObject = new JSONObject(json);
         UserEntity user = new UserEntity();
         // check jsonObject
         if (jsonObject.isEmpty()) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "create", "Lỗi nhập thông tin");
+            throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "create", properties.getProperty("inputFaild"));
         }
 
-        String username = jsonObject.getString("username");
         // check userName
-        boolean checkUserName = username.matches(validate.USERNAME);
-        if (checkUserName == false) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("username"));
-        } else {
-            user.setUsername(username);
+        if (jsonObject.has("username")) {
+            String username = jsonObject.getString("username");
+            boolean checkUserName = username.matches(validate.USERNAME);
+            if (checkUserName == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("username"));
+            } else {
+                user.setUsername(username);
+            }
         }
 
-        String phoneNumber = jsonObject.getString("phoneNumber");
-        // check numberPhone
-        boolean checkphoneNumber = phoneNumber.matches(validate.NUMBER_PHONE);
-        if (checkphoneNumber == false) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("numberPhone"));
-        } else {
-            user.setPhoneNumber(phoneNumber);
-        }
-
-        String password = jsonObject.getString("password");
         // check password
-        boolean checkPassWord = password.matches(validate.PASSWORD);
-        if (checkPassWord == false) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("password"));
-        } else {
-            user.setPassword(bCryptPasswordEncoder.encode(password));
+        if (jsonObject.has("password")) {
+            String password = jsonObject.getString("password");
+            boolean checkPassWord = password.matches(validate.PASSWORD);
+            if (checkPassWord == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("password"));
+            } else {
+                user.setPassword(bCryptPasswordEncoder.encode(password));
+            }
         }
 
-        String email = jsonObject.getString("email");
+        // check numberPhone
+        if (jsonObject.has("phoneNumber")) {
+            String phoneNumber = jsonObject.getString("phoneNumber");
+            boolean checkphoneNumber = phoneNumber.matches(validate.NUMBER_PHONE);
+            if (checkphoneNumber == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("numberPhone"));
+            } else {
+                user.setPhoneNumber(phoneNumber);
+            }
+        }
+
         // check email
-        boolean checkEmail = email.matches(validate.EMAIL);
-        if (checkEmail == false) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("email"));
-        } else {
-            user.setEmail(email);
+        if (jsonObject.has("email")) {
+            String email = jsonObject.getString("email");
+            boolean checkEmail = email.matches(validate.EMAIL);
+            if (checkEmail == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("email"));
+            } else {
+                user.setEmail(email);
+            }
         }
 
-        String dOBirth = jsonObject.getString("dOBirth");
         // check date of birth
-        boolean checkdOBirth = dOBirth.matches(validate.DATE);
-        if (checkdOBirth == false) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("dOBirth"));
-        } else {
-            user.setdOBirth(dOBirth);
+        if (jsonObject.has("dOBirth")) {
+            String dOBirth = jsonObject.getString("dOBirth");
+            boolean checkdOBirth = dOBirth.matches(validate.DATE);
+            if (checkdOBirth == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "create user", properties.getProperty("dOBirth"));
+            } else {
+                user.setdOBirth(dOBirth);
+            }
         }
 
         RoleEntity role = new RoleEntity();
@@ -152,8 +162,10 @@ public class UserServiceImpl implements UserService {
         user.setRole(roles);
         user.setBankId(jsonObject.getInt("bankId"));
         userDao.createUser(user);
+        UserDto userDto = userDao.getUserDtoByUserId(user.getUserId());
+        ResultBean resultBean = new ResultBean(userDto, constant.OK, properties.getProperty("ok"));
         log.debug("### createUser END ###");
-        return user;
+        return resultBean;
     }
 
     /**
@@ -163,16 +175,17 @@ public class UserServiceImpl implements UserService {
      * @return UserEntity
      * @throws ApiValidateException
      */
-    @SuppressWarnings("static-access")
     @Override
-    public UserEntity getUserById() throws ApiValidateException {
+    public ResultBean getUserById() throws ApiValidateException {
         log.debug("### getUserById START ###");
         UserEntity user = authenticationHelper.getLoggedInUser();
         if (user == null) {
-            throw new ApiValidateException(constant.FORBIDDEN, "getUser", "Lỗi truy cập");
+            throw new ApiValidateException(Constant.BAD_GATEWAY, "getUser", properties.getProperty("unauthorize"));
         }
+        UserDto userDto = userDao.getUserDtoByUserId(user.getUserId());
+        ResultBean resultBean = new ResultBean(userDto, "getUser", properties.getProperty("ok"));
         log.debug("### getUserById END ###");
-        return user;
+        return resultBean;
     }
 
     /**
@@ -184,32 +197,73 @@ public class UserServiceImpl implements UserService {
      */
     @SuppressWarnings("static-access")
     @Override
-    public UserEntity updateUser(String json) throws ApiValidateException {
+    public ResultBean updateUser(String json) throws ApiValidateException {
         log.debug("### updateUserById START ###");
         UserEntity user = authenticationHelper.getLoggedInUser();
         JSONObject jsonObject = new JSONObject(json);
         if (jsonObject.isEmpty()) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "update", "Lỗi nhập thông tin");
+            throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "update", properties.getProperty("inputFaild"));
         }
+
+        // check userName
         if (jsonObject.has("username")) {
-            user.setUsername(bCryptPasswordEncoder.encode(jsonObject.getString("username")));
+            String username = jsonObject.getString("username");
+            boolean checkUserName = username.matches(validate.USERNAME);
+            if (checkUserName == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "update user", properties.getProperty("username"));
+            } else {
+                user.setUsername(username);
+            }
         }
 
+        // check password
         if (jsonObject.has("password")) {
-            user.setPassword(jsonObject.getString("password"));
+            String password = jsonObject.getString("password");
+            boolean checkPassWord = password.matches(validate.PASSWORD);
+            if (checkPassWord == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "update user", properties.getProperty("password"));
+            } else {
+                user.setPassword(bCryptPasswordEncoder.encode(password));
+            }
         }
 
+        // check numberPhone
+        if (jsonObject.has("phoneNumber")) {
+            String phoneNumber = jsonObject.getString("phoneNumber");
+            boolean checkphoneNumber = phoneNumber.matches(validate.NUMBER_PHONE);
+            if (checkphoneNumber == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "update user", properties.getProperty("numberPhone"));
+            } else {
+                user.setPhoneNumber(phoneNumber);
+            }
+        }
+
+        // check email
         if (jsonObject.has("email")) {
-            user.setEmail(jsonObject.getString("email"));
+            String email = jsonObject.getString("email");
+            boolean checkEmail = email.matches(validate.EMAIL);
+            if (checkEmail == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "update user", properties.getProperty("email"));
+            } else {
+                user.setEmail(email);
+            }
         }
 
+        // check date of birth
         if (jsonObject.has("dOBirth")) {
-            user.setdOBirth(jsonObject.getString("dOBirth"));
+            String dOBirth = jsonObject.getString("dOBirth");
+            boolean checkdOBirth = dOBirth.matches(validate.DATE);
+            if (checkdOBirth == false) {
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "update user", properties.getProperty("dOBirth"));
+            } else {
+                user.setdOBirth(dOBirth);
+            }
         }
 
         userDao.updateUser(user);
+        ResultBean resultBean = new ResultBean(user, constant.OK, properties.getProperty("OK"));
         log.debug("### updateUserById END ###");
-        return user;
+        return resultBean;
     }
 
     /**
@@ -220,9 +274,8 @@ public class UserServiceImpl implements UserService {
      * @return UserBankEntity
      * @throws ApiValidateException
      */
-    @SuppressWarnings("static-access")
     @Override
-    public BankEntity linkToBank(String json) throws ApiValidateException {
+    public ResultBean linkToBank(String json) throws ApiValidateException {
         log.debug("### linkToBank START ###");
         UserEntity user = authenticationHelper.getLoggedInUser();
         List<UserBankEntity> userBankEntities = this.getAllBankByUser();
@@ -230,11 +283,11 @@ public class UserServiceImpl implements UserService {
         Integer bankId = jsonObject.getInt("bankId");
 
         if (bankId.equals(user.getBankId())) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "link to bank", "Ngân hàng liên kết đã được đăng kí");
+            throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "link to bank", "Ngân hàng liên kết đã được đăng kí");
         }
         for (UserBankEntity ub : userBankEntities) {
             if (bankId.equals(ub.getBankId())) {
-                throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "link to bank", "Ngân hàng đã được liên kết");
+                throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "link to bank", "Ngân hàng đã được liên kết");
             }
         }
         UserBankEntity userBankEntity = new UserBankEntity();
@@ -250,9 +303,10 @@ public class UserServiceImpl implements UserService {
      * @author: (VNEXT) ChinhTQ
      * @param id
      * @return List<UserBankEntity> of one user
+     * @throws ApiValidateException 
      */
     @Override
-    public List<UserBankEntity> getAllBankByUser() {
+    public List<UserBankEntity> getAllBankByUser() throws ApiValidateException {
         log.debug("### getAllBankByUserId START ###");
         UserEntity user = authenticationHelper.getLoggedInUser();
         List<UserBankEntity> userBankEntities = userDao.getAllBankByUserId(user.getUserId());
@@ -266,14 +320,13 @@ public class UserServiceImpl implements UserService {
      * @return List<UserBank> of one user
      * @throws ApiValidateException 
      */
-    @SuppressWarnings("static-access")
     @Override
     public List<UserBank> getBanksByUser() throws ApiValidateException {
         log.debug("### getBanksByUserId START ###");
         UserEntity user = authenticationHelper.getLoggedInUser();
         List<UserBank> userBanks = userDao.getBanksByUserId(user.getUserId());
         if (userBanks.isEmpty()) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "getBanksByUserId", "Bạn chưa đăng kí liên kết");
+            throw new ApiValidateException(Constant.METHOD_NOT_ALLOWED, "getBanksByUserId", "Bạn chưa đăng kí liên kết");
         }
         log.debug("### getBanksByUserId END ###");
         return userBanks;
@@ -293,14 +346,23 @@ public class UserServiceImpl implements UserService {
         log.debug("### login START ###");
         JSONObject jsonObject = new JSONObject(json);
         if (jsonObject.isEmpty()) {
-            throw new ApiValidateException(constant.NOT_FOUND, "faild", "not found");
+            throw new ApiValidateException(Constant.NOT_FOUND, "faild", "not found");
         }
         String username = jsonObject.getString("username");
-        authenticate(username, jsonObject.getString("password"));
+        String password = jsonObject.getString("password");
+        bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        JwtResponse jwtResponse = null;
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        String token = jwtTokenUtil.generateToken(userDetails);
-        UserEntity user = this.getByUsername(username);
-        JwtResponse jwtResponse = new JwtResponse(token, user);
+        if (username.equalsIgnoreCase(userDetails.getUsername()) && bCryptPasswordEncoder.matches(password, userDetails.getPassword())) {
+            authenticate(username, password);
+            String token = jwtTokenUtil.generateToken(userDetails);
+            UserEntity user = this.getByUsername(username);
+            UserDto userDto = userDao.getUserDtoByUserId(user.getUserId());
+            jwtResponse = new JwtResponse(token, userDto);
+        } else {
+            throw new ApiValidateException(Constant.FORBIDDEN, "login", properties.getProperty("loginFaild"));
+        }
+
         log.debug("### login END ###");
         return jwtResponse;
     }
@@ -330,12 +392,17 @@ public class UserServiceImpl implements UserService {
      * @author: (VNEXT) ChinhTQ
      * @param username
      * @return UserEntity
+     * @throws ApiValidateException 
      */
+    @SuppressWarnings("static-access")
     @Override
-    public UserEntity getByUsername(String username) {
+    public UserEntity getByUsername(String username) throws ApiValidateException {
         log.debug("### getByUsername START ###");
 
         Optional<UserEntity> userOptional = userRepository.findByUsername(username);
+        if (userOptional == null) {
+            throw new ApiValidateException(constant.BAD_REQUEST, "login", properties.getProperty("inputLoginNull"));
+        }
 
         log.debug("### getByUsername END ###");
         return userOptional.orElse(null);

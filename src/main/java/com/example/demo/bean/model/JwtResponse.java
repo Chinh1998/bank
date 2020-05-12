@@ -7,8 +7,6 @@ package com.example.demo.bean.model;
 
 import java.io.Serializable;
 
-import com.example.demo.bean.entity.UserEntity;
-
 /**
  * [OVERVIEW] XXXXX.
  *
@@ -23,9 +21,9 @@ public class JwtResponse implements Serializable {
 
     private static final long serialVersionUID = -8091879091924046844L;
     private final String token;
-    private final UserEntity user;
+    private final UserDto user;
 
-    public JwtResponse(String token, UserEntity user) {
+    public JwtResponse(String token, UserDto user) {
         this.token = token;
         this.user = user;
     }
@@ -34,7 +32,7 @@ public class JwtResponse implements Serializable {
         return token;
     }
 
-    public UserEntity getUser() {
+    public UserDto getUser() {
         return user;
     }
 

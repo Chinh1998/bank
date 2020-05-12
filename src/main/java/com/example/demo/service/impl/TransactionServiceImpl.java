@@ -12,13 +12,14 @@ import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.bean.ResultBean;
 import com.example.demo.bean.entity.BankEntity;
 import com.example.demo.bean.entity.TransactionEntity;
 import com.example.demo.bean.entity.UserEntity;
@@ -30,6 +31,7 @@ import com.example.demo.helper.AuthenticationHelper;
 import com.example.demo.service.TransactionService;
 import com.example.demo.ultil.ApiValidateException;
 import com.example.demo.ultil.Constant;
+import com.example.demo.ultil.ReadProperties;
 import com.opencsv.CSVWriter;
 
 /**
@@ -45,7 +47,7 @@ import com.opencsv.CSVWriter;
 @Service
 public class TransactionServiceImpl implements TransactionService {
 
-    private static final Log log = LogFactory.getLog(TransactionServiceImpl.class);
+    private static final Logger log = Logger.getLogger(TransactionServiceImpl.class);
 
     @Autowired
     private TransactionDao transactionDao;
@@ -55,7 +57,9 @@ public class TransactionServiceImpl implements TransactionService {
     private BankDao bankDao;
     @Autowired
     private AuthenticationHelper authenticationHelper;
-    private Constant constant;
+    @SuppressWarnings("static-access")
+    private Properties properties = new ReadProperties().readProperties();
+    static final Constant constant = new Constant();
 
     /**
      * sendMoney
@@ -64,15 +68,16 @@ public class TransactionServiceImpl implements TransactionService {
      * @return TransactionEntity
      * @throws ApiValidateException
      */
+    @SuppressWarnings("static-access")
     @Override
-    public TransactionEntity sendMoney(String json) throws ApiValidateException {
+    public ResultBean sendMoney(String json) throws ApiValidateException {
         log.debug("### sendMoney START ###");
         // get user logged
         UserEntity userEntity = authenticationHelper.getLoggedInUser();
         JSONObject jsonObject = new JSONObject(json);
         //check jsonObject
         if (jsonObject.isEmpty()) {
-            throw new ApiValidateException("404", "...", "not found");
+            throw new ApiValidateException(constant.NOT_FOUND, "...", properties.getProperty("inputFaild"));
         }
 
         TransactionEntity transactionEntity = new TransactionEntity();
@@ -85,8 +90,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         transactionDao.createTransaction(transactionEntity);
         userDao.afterSendMoney(userEntity.getUserId(), jsonObject.getDouble("money"));
+        ResultBean resultBean = new ResultBean(transactionEntity, Constant.OK, "...", properties.getProperty("ok"));
         log.debug("### sendMoney END ###");
-        return transactionEntity;
+        return resultBean;
 
     }
 
@@ -97,6 +103,7 @@ public class TransactionServiceImpl implements TransactionService {
      * @return TransactionEntity
      * @throws ApiValidateException
      */
+    @SuppressWarnings("static-access")
     @Override
     public TransactionEntity withdrawMoney(String json) throws ApiValidateException {
         log.debug("### withdrawMoney START ###");
@@ -105,28 +112,29 @@ public class TransactionServiceImpl implements TransactionService {
         UserEntity userEntity = authenticationHelper.getLoggedInUser();
         //check jsonObject
         if (jsonObject.isEmpty()) {
-            throw new ApiValidateException("404", "...", "not found");
+            throw new ApiValidateException(constant.NOT_FOUND, "...", properties.getProperty("inputFaild"));
         }
         TransactionEntity transactionEntity = new TransactionEntity();
         double money = jsonObject.getDouble("money");
 
         BankEntity bankEntity = bankDao.getById(userEntity.getBankId());
         if (money % bankEntity.getMinTransaction() != 0) {
-            throw new ApiValidateException("203", "withdrawMoney", "Vui lòng nhập tiền là bội số của " + bankEntity.getMinTransaction());
+            throw new ApiValidateException("203", "withdrawMoney", properties.getProperty("inputMoney") + bankEntity.getMinTransaction());
         }
         if (Double.compare(userEntity.getBalance(), money) < 0) {
-            throw new ApiValidateException("203", "withdrawMoney", "Số dư của bạn không đủ");
+            throw new ApiValidateException("203", "withdrawMoney", properties.getProperty("checkBalance"));
         }
         transactionEntity.setCreateBy(userEntity.getUserId());
         transactionEntity.setUserId(userEntity.getUserId());
         transactionEntity.setBankId(userEntity.getBankId());
         transactionEntity.setTypeId(2);
         transactionEntity.setMoney(money);
-        transactionEntity.setFee(this.feeUse(userEntity.getUserId(), money));
+        double fee = this.feeUse(userEntity.getUserId(), money);
+        transactionEntity.setFee(fee);
         transactionEntity.setDateTrading(jsonObject.getString("dateTrading"));
 
         transactionDao.createTransaction(transactionEntity);
-        userDao.afterWithdrawMoney(userEntity.getUserId(), jsonObject.getDouble("money"));
+        userDao.afterWithdrawMoney(userEntity.getUserId(), jsonObject.getDouble("money"), fee);
         log.debug("### withdrawMoney END ###");
         return transactionEntity;
     }
@@ -147,7 +155,7 @@ public class TransactionServiceImpl implements TransactionService {
         UserEntity user = authenticationHelper.getLoggedInUser();
         //check jsonObject
         if (jsonObject.isEmpty()) {
-            throw new ApiValidateException(constant.NOT_FOUND, "...", "not found");
+            throw new ApiValidateException(constant.NOT_FOUND, "...", properties.getProperty("inputFaild"));
         }
         TransactionEntity transactionEntity = new TransactionEntity();
 
@@ -161,23 +169,24 @@ public class TransactionServiceImpl implements TransactionService {
 
         // validate money
         if (money % bankEntity.getMinTransaction() != 0) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "withdrawMoney", "Vui lòng nhập tiền là bội số của " + bankEntity.getMinTransaction());
+            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "withdrawMoney", properties.getProperty("inputMoney") + bankEntity.getMinTransaction());
         }
         if (Double.compare(user.getBalance(), money) < 0) {
-            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "withdrawMoney", "Số dư của bạn không đủ");
+            throw new ApiValidateException(constant.METHOD_NOT_ALLOWED, "withdrawMoney", properties.getProperty("checkBalance"));
         }
         transactionEntity.setCreateBy(user.getUserId());
         transactionEntity.setUserId(userId);
         transactionEntity.setBankId(user.getBankId());
         transactionEntity.setTypeId(3);
         transactionEntity.setMoney(money);
-        transactionEntity.setFee(this.feeUse(user.getUserId(), money));
+        double fee = this.feeUse(user.getUserId(), money);
+        transactionEntity.setFee(fee);
         transactionEntity.setDateTrading(jsonObject.getString("dateTrading"));
 
         transactionDao.createTransaction(transactionEntity);
-        boolean checkTranfer = userDao.afterTransferMoney(user.getUserId(), money);
+        boolean checkTranfer = userDao.afterTransferMoney(user.getUserId(), money, fee);
         if (checkTranfer == false) {
-            throw new ApiValidateException("400", "transfer", "Error System");
+            throw new ApiValidateException(constant.INTERNAL_SERVER_ERROR, "transfer", properties.getProperty("unauthorize"));
         } else {
             userDao.afterReceiverMoney(userId, money);
         }
@@ -200,7 +209,7 @@ public class TransactionServiceImpl implements TransactionService {
         UserEntity user = authenticationHelper.getLoggedInUser();
         List<UserTransaction> userTransactions = transactionDao.getByUserId(user.getUserId());
         if (userTransactions.isEmpty()) {
-            throw new ApiValidateException(constant.NOT_FOUND, "view", "not found");
+            throw new ApiValidateException(constant.NOT_FOUND, "view", properties.getProperty("inputFaild"));
         }
         log.debug("### getAllByUser END ###");
         return userTransactions;

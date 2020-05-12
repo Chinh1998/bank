@@ -24,5 +24,11 @@ import com.example.demo.bean.entity.UserEntity;
 */
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
+    /**
+     * findByUsername
+     * @author: (VNEXT) ChinhTQ
+     * @param username
+     * @return
+     */
     Optional<UserEntity> findByUsername(String username);
 }
